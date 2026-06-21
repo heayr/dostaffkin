@@ -26,6 +26,7 @@ export class Order {
 
   public orderId: any = signal(null);
   public calculationResult: any = signal(null);
+  public isLoading: any = signal(false);
 
   constructor(private formBuilder: FormBuilder, private deliveryApi: DeliveryApi) {
     this.routeForm = this.formBuilder.group({
@@ -35,8 +36,8 @@ export class Order {
       speed: ['regular', Validators.required]
     });
     this.orderForm = this.formBuilder.group({
-      name: ['', Validators.required],
-      phone: ['', [Validators.required]],
+      name: ['', [Validators.required, Validators.pattern(/^[A-Za-zА-Яа-яЁё\s]+$/)]],
+      phone: ['', [Validators.required, Validators.pattern(/^\+?\d+$/)]],
       comment: ['']
     });
   }
@@ -64,11 +65,12 @@ export class Order {
   }
 
   public calculate() {
-    this.calculationResult.set(null);
-
     if (!this.map || this.routeForm.invalid) {
       return;
     }
+
+    this.calculationResult.set(null);
+    this.isLoading.set(true);
 
     const { from, to, size, speed } = this.routeForm.getRawValue();
 
@@ -114,6 +116,7 @@ export class Order {
           total,
           speed
         });
+        this.isLoading.set(false);
       } catch (err) {
         this.failedCalculation();
       }
@@ -123,6 +126,7 @@ export class Order {
   }
 
   private failedCalculation() {
+    this.isLoading.set(false);
     this.calculationResult.set(null);
     alert('Не удалось построить маршрут. Проверьте адреса и выбранные параметры.');
   }
